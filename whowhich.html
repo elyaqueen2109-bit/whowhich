@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who or Which? Interactive</title>
+    <style>
+        /* --- КОСМИЧЕСКИЙ ФОН --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stars {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 40px 70px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 130px 80px, #fff, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: twinkle 4s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        /* --- КОНТЕЙНЕР И КАРТОЧКА --- */
+        .card-container {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            height: 480px;
+            z-index: 1;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0; left: 0;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s;
+        }
+
+        .card.hide {
+            transform: translateX(150%) rotate(15deg) scale(0.8);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* --- СТРУКТУРА ДЛЯ ПРАКТИКИ (ЦЕНТРИРОВАНИЕ) --- */
+        .practice-card {
+            justify-content: space-between; /* Разносит текст и кнопки по краям */
+        }
+
+        .practice-content {
+            flex-grow: 1; /* Занимает все свободное место */
+            display: flex;
+            justify-content: center; /* Центрирует по горизонтали */
+            align-items: center; /* Центрирует по вертикали */
+            width: 100%;
+        }
+
+        .practice-footer {
+            display: flex;
+            justify-content: center;
+            padding-bottom: 20px; /* Отступ снизу */
+        }
+
+        /* --- АНИМАЦИИ --- */
+        .fade-in-up {
+            animation: fadeInUp 0.5s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pop-in {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        @keyframes popIn {
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- ТЕКСТ --- */
+        .explain-rule {
+            font-size: 28px;
+            color: #00e5ff;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+            text-align: center;
+        }
+
+        .sentence {
+            font-size: 28px; /* Чуть увеличили для практики */
+            color: #ffffff;
+            line-height: 1.6;
+            font-weight: 500;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Стили для объяснения (чтобы текст не прилипал) */
+        .explanation-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            text-align: center;
+        }
+
+        .blank-line {
+            display: inline-block;
+            width: 100px;
+            border-bottom: 3px solid #fff;
+            margin: 0 10px;
+            position: relative;
+            height: 35px;
+            vertical-align: bottom;
+        }
+
+        .inserted-word {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 32px;
+            text-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+        }
+
+        .hint-text {
+            font-size: 22px;
+            color: #ffeb3b;
+            margin-top: 15px;
+            font-style: italic;
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+            text-align: center;
+        }
+
+        /* --- КНОПКИ --- */
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #00e5ff;
+            color: #00e5ff;
+            padding: 15px 50px;
+            font-size: 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2), inset 0 0 10px rgba(0, 229, 255, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            background: rgba(0, 229, 255, 0.15);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.6), inset 0 0 15px rgba(0, 229, 255, 0.4);
+            text-shadow: 0 0 10px #00e5ff;
+        }
+
+        .btn-next {
+            border-color: #4CAF50;
+            color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+            padding: 12px 40px;
+            font-size: 20px;
+            margin-top: 30px;
+        }
+        .btn-next:hover {
+            background: rgba(76, 175, 80, 0.15);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+            text-shadow: 0 0 10px #4CAF50;
+        }
+
+        .practice-buttons {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .btn.correct {
+            background: rgba(76, 175, 80, 0.2) !important;
+            border-color: #4CAF50 !important;
+            color: #4CAF50 !important;
+            box-shadow: 0 0 30px rgba(76, 175, 80, 0.8), inset 0 0 20px rgba(76, 175, 80, 0.5);
+        }
+
+        .btn.wrong {
+            background: rgba(244, 67, 54, 0.2) !important;
+            border-color: #f44336 !important;
+            color: #f44336 !important;
+            box-shadow: 0 0 30px rgba(244, 67, 54, 0.8), inset 0 0 20px rgba(244, 67, 54, 0.5);
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+        }
+
+        /* --- ЭКРАН ЗАВЕРШЕНИЯ --- */
+        .finish-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 50px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 50px rgba(0, 229, 255, 0.3);
+            z-index: 2;
+            animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .finish-screen h2 {
+            color: #00e5ff;
+            font-size: 38px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.8);
+        }
+        .finish-screen p { font-size: 22px; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div class="stars"></div>
+    <div class="card-container" id="cardContainer"></div>
+
+    <div class="finish-screen" id="finishScreen">
+        <h2>Great job! 🌟</h2>
+        <p>You completed all the sentences!</p>
+    </div>
+
+    <script>
+        const questions = [
+            { part1: "I have a dog", part2: "barks loudly.", correct: "WHO" },
+            { part1: "She is the girl", part2: "won the competition.", correct: "WHO" },
+            { part1: "This is a book", part2: "I like very much.", correct: "WHICH" },
+            { part1: "Look at the man", part2: "is wearing a red hat.", correct: "WHO" },
+            { part1: "I know a woman", part2: "teaches English.", correct: "WHO" },
+            { part1: "Where is the phone", part2: "was on the table?", correct: "WHICH" },
+            { part1: "We have a teacher", part2: "gives us a lot of homework.", correct: "WHO" },
+            { part1: "They live in a house", part2: "has a big garden.", correct: "WHICH" },
+            { part1: "She has a cat", part2: "sleeps all day.", correct: "WHO" },
+            { part1: "The boy", part2: "is sitting next to me is my best friend.", correct: "WHO" },
+            { part1: "I want to buy a car", part2: "is very fast.", correct: "WHICH" },
+            { part1: "Do you know the artist", part2: "painted this picture?", correct: "WHO" },
+            { part1: "He told me a story", part2: "was very funny.", correct: "WHICH" },
+            { part1: "This is the doctor", part2: "helped my mom.", correct: "WHO" },
+            { part1: "I like movies", part2: "have a happy ending.", correct: "WHICH" }
+        ];
+
+        let currentQuestionIndex = 0;
+        const container = document.getElementById('cardContainer');
+        const finishScreen = document.getElementById('finishScreen');
+
+        // --- ЗВУКИ ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+                oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.6);
+            } else if (type === 'wrong') {
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'pop') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.15);
+            }
+        }
+
+        // === ОБЪЯСНЕНИЕ WHO ===
+        function startExplanationWho() {
+            const card = document.createElement('div');
+            card.className = 'card';
+            container.appendChild(card);
+
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'explanation-content';
+            card.appendChild(contentWrapper);
+
+            const rule = document.createElement('div');
+            rule.className = 'explain-rule fade-in-up';
+            rule.innerHTML = `We use <b style="color:#4CAF50">WHO</b> for people and animals.`;
+            contentWrapper.appendChild(rule);
+            playSound('pop');
+
+            const btnNext = document.createElement('button');
+            btnNext.className = 'btn btn-next fade-in-up';
+            btnNext.innerText = 'Next ➔';
+            btnNext.onclick = () => {
+                btnNext.remove();
+                const sentence = document.createElement('div');
+                sentence.className = 'sentence fade-in-up';
+                sentence.innerHTML = `Example: The boy <span class="blank-line" id="blank-who"></span> plays football, is my brother.`;
+                contentWrapper.appendChild(sentence);
+                playSound('pop');
+                
+                const btnNext2 = document.createElement('button');
+                btnNext2.className = 'btn btn-next fade-in-up';
+                btnNext2.innerText = 'Next ➔';
+                btnNext2.onclick = () => {
+                    btnNext2.remove();
+                    const hint = document.createElement('div');
+                    hint.className = 'hint-text fade-in-up';
+                    hint.innerText = `The boy is a person.`;
+                    contentWrapper.appendChild(hint);
+                    playSound('pop');
+
+                    const btnNext3 = document.createElement('button');
+                    btnNext3.className = 'btn btn-next fade-in-up';
+                    btnNext3.innerText = 'Next ➔';
+                    btnNext3.onclick = () => {
+                        btnNext3.remove();
+                        const blank = document.getElementById('blank-who');
+                        blank.innerHTML = `<span class="inserted-word pop-in">WHO</span>`;
+                        playSound('correct');
+
+                        const btnNextRule = document.createElement('button');
+                        btnNextRule.className = 'btn btn-next fade-in-up';
+                        btnNextRule.innerText = 'Learn WHICH ➔';
+                        btnNextRule.onclick = () => {
+                            card.classList.add('hide');
+                            setTimeout(() => {
+                                card.remove();
+                                startExplanationWhich();
+                            }, 600);
+                        };
+                        contentWrapper.appendChild(btnNextRule);
+                    };
+                    contentWrapper.appendChild(btnNext3);
+                };
+                contentWrapper.appendChild(btnNext2);
+            };
+            contentWrapper.appendChild(btnNext);
+        }
+
+        // === ОБЪЯСНЕНИЕ WHICH ===
+        function startExplanationWhich() {
+            const card = document.createElement('div');
+            card.className = 'card';
+            container.appendChild(card);
+
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'explanation-content';
+            card.appendChild(contentWrapper);
+
+            const rule = document.createElement('div');
+            rule.className = 'explain-rule fade-in-up';
+            rule.innerHTML = `We use <b style="color:#00e5ff">WHICH</b> for things and objects.`;
+            contentWrapper.appendChild(rule);
+            playSound('pop');
+
+            const btnNext = document.createElement('button');
+            btnNext.className = 'btn btn-next fade-in-up';
+            btnNext.innerText = 'Next ➔';
+            btnNext.onclick = () => {
+                btnNext.remove();
+                const sentence = document.createElement('div');
+                sentence.className = 'sentence fade-in-up';
+                sentence.innerHTML = `Example: The book <span class="blank-line" id="blank-which"></span> is on the table is mine.`;
+                contentWrapper.appendChild(sentence);
+                playSound('pop');
+                
+                const btnNext2 = document.createElement('button');
+                btnNext2.className = 'btn btn-next fade-in-up';
+                btnNext2.innerText = 'Next ➔';
+                btnNext2.onclick = () => {
+                    btnNext2.remove();
+                    const hint = document.createElement('div');
+                    hint.className = 'hint-text fade-in-up';
+                    hint.innerText = `The book is an object.`;
+                    contentWrapper.appendChild(hint);
+                    playSound('pop');
+
+                    const btnNext3 = document.createElement('button');
+                    btnNext3.className = 'btn btn-next fade-in-up';
+                    btnNext3.innerText = 'Next ➔';
+                    btnNext3.onclick = () => {
+                        btnNext3.remove();
+                        const blank = document.getElementById('blank-which');
+                        blank.innerHTML = `<span class="inserted-word pop-in">WHICH</span>`;
+                        playSound('correct');
+
+                        const btnPractice = document.createElement('button');
+                        btnPractice.className = 'btn btn-next fade-in-up';
+                        btnPractice.innerText = "Let's practice! 🚀";
+                        btnPractice.onclick = startQuiz;
+                        contentWrapper.appendChild(btnPractice);
+                    };
+                    contentWrapper.appendChild(btnNext3);
+                };
+                contentWrapper.appendChild(btnNext2);
+            };
+            contentWrapper.appendChild(btnNext);
+        }
+
+        // === ПРАКТИКА ===
+        function startQuiz() {
+            playSound('correct');
+            const card = container.querySelector('.card');
+            card.classList.add('hide');
+            setTimeout(() => {
+                card.remove();
+                renderCard();
+            }, 600);
+        }
+
+        function renderCard() {
+            if (currentQuestionIndex >= questions.length) {
+                container.style.display = 'none';
+                finishScreen.style.display = 'flex';
+                playSound('correct');
+                return;
+            }
+
+            const q = questions[currentQuestionIndex];
+            const card = document.createElement('div');
+            // Добавляем класс для практики, чтобы включить flex-структуру
+            card.className = 'card practice-card';
+            
+            // Новая структура: контент (текст) по центру, кнопки внизу
+            card.innerHTML = `
+                <div class="practice-content">
+                    <div class="sentence">
+                        ${q.part1} <span class="blank-line" id="practice-blank"></span> ${q.part2}
+                    </div>
+                </div>
+                <div class="practice-footer">
+                    <div class="practice-buttons">
+                        <button class="btn" data-value="WHO">WHO</button>
+                        <button class="btn" data-value="WHICH">WHICH</button>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(card);
+
+            const buttons = card.querySelectorAll('.practice-buttons .btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => handleAnswer(e.target, card, q.correct));
+            });
+        }
+
+        function handleAnswer(button, card, correctAnswer) {
+            const selectedValue = button.getAttribute('data-value');
+            const allBtns = card.querySelectorAll('.practice-buttons .btn');
+            allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+            if (selectedValue === correctAnswer) {
+                button.classList.add('correct');
+                playSound('correct');
+                
+                const blank = card.querySelector('#practice-blank');
+                blank.innerHTML = `<span class="inserted-word pop-in">${correctAnswer}</span>`;
+
+                setTimeout(() => {
+                    card.classList.add('hide');
+                    currentQuestionIndex++;
+                    setTimeout(() => {
+                        card.remove(); 
+                        renderCard();  
+                    }, 600); 
+                }, 2000);
+
+            } else {
+                button.classList.add('wrong');
+                playSound('wrong');
+                
+                setTimeout(() => {
+                    button.classList.remove('wrong');
+                    allBtns.forEach(b => b.style.pointerEvents = 'auto');
+                }, 1000);
+            }
+        }
+
+        // Запуск
+        startExplanationWho();
+
+    </script>
+</body>
+</html>
